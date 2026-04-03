@@ -1,6 +1,3 @@
-"""
-HTTP Client utility — wraps requests with shared session, timeouts, and logging.
-"""
 
 import requests
 from urllib.parse import urljoin, urlparse
@@ -16,12 +13,12 @@ class HTTPClient:
             "User-Agent": "WebVulnScanner/1.0 (Educational)",
         })
 
-    def get(self, path: str = "", params: dict = None, **kwargs) -> requests.Response | None:
+    def get(self, path: str = "", params: dict = None, follow_redirects: bool = False, **kwargs) -> requests.Response | None:
         url = urljoin(self.base_url, path) if path else self.base_url
         try:
             if self.verbose:
                 print(f"    [GET] {url} params={params}")
-            return self.session.get(url, params=params, timeout=self.timeout, allow_redirects=False, **kwargs)
+            return self.session.get(url, params=params, timeout=self.timeout, allow_redirects=follow_redirects, **kwargs)
         except requests.exceptions.RequestException as e:
             if self.verbose:
                 print(f"    [ERR] {e}")

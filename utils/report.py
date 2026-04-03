@@ -1,6 +1,3 @@
-"""
-Report Generator — prints a colour-coded summary and saves a JSON report.
-"""
 
 import json
 from datetime import datetime

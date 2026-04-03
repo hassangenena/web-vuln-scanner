@@ -1,13 +1,3 @@
-"""
-Module: Open Redirect Scanner
-Tests URL parameters for open redirect vulnerabilities.
-
-What you'll learn:
-  - What open redirects are and how they're used in phishing
-  - How attackers abuse trusted domains to redirect victims
-  - Common parameter names that are redirect targets (url, next, redirect, etc.)
-  - The difference between client-side and server-side redirects
-"""
 
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from utils.report import Finding

@@ -1,13 +1,4 @@
-"""
-Module: Reflected XSS Scanner
-Injects XSS payloads into URL parameters and checks if they reflect unescaped.
 
-What you'll learn:
-  - The difference between Reflected, Stored, and DOM-based XSS
-  - How browsers parse and execute injected scripts
-  - Why output encoding (HTML escaping) is the fix
-  - How tools like Burp Suite detect XSS
-"""
 
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from utils.report import Finding

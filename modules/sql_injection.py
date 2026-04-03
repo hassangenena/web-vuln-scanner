@@ -1,13 +1,3 @@
-"""
-Module: SQL Injection Scanner
-Tests URL query parameters for error-based SQLi indicators.
-
-What you'll learn:
-  - How SQLi payloads work (breaking out of SQL string context)
-  - Error-based detection vs. blind SQLi (time-based, boolean-based)
-  - Why parameterized queries / prepared statements fix this
-  - How to safely fuzz parameters without crashing the target
-"""
 
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from utils.report import Finding

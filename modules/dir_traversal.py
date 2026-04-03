@@ -1,13 +1,3 @@
-"""
-Module: Directory Traversal / Path Traversal Scanner
-Tests for path traversal vulnerabilities in URL parameters.
-
-What you'll learn:
-  - How path traversal lets attackers read arbitrary files (e.g. /etc/passwd)
-  - Why "../" sequences in file parameters are dangerous
-  - How OS-level file access maps to web app vulnerabilities
-  - Encoding tricks attackers use to bypass naive filters
-"""
 
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from utils.report import Finding

@@ -1,12 +1,4 @@
-"""
-Module: Security Header Scanner
-Checks for missing or misconfigured HTTP security headers.
 
-What you'll learn:
-  - What each header does and why it matters
-  - How attackers exploit missing headers (clickjacking, MIME sniffing, etc.)
-  - How to read and interpret HTTP response headers
-"""
 
 from utils.report import Finding
 

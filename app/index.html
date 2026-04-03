@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebScan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="noise"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">WEBSCAN</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="scan">
+        <span class="nav-icon">◈</span> New Scan
+      </button>
+      <button class="nav-btn" data-tab="reports">
+        <span class="nav-icon">◉</span> Reports
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-indicator" id="statusDot">
+        <span class="dot"></span>
+        <span class="status-text">IDLE</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- SCAN TAB -->
+    <section class="tab active" id="tab-scan">
+      <div class="tab-header">
+        <h1>New Scan</h1>
+        <p class="subtitle">Configure and launch a vulnerability assessment</p>
+      </div>
+
+      <div class="scan-layout">
+        <!-- Config panel -->
+        <div class="config-panel">
+          <div class="field-group">
+            <label class="field-label">TARGET URL</label>
+            <div class="input-wrapper">
+              <span class="input-prefix">⌕</span>
+              <input
+                type="text"
+                id="targetInput"
+                class="target-input"
+                placeholder="https://target.com"
+                spellcheck="false"
+              />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">MODULES</label>
+            <div class="modules-grid">
+              <label class="module-toggle" data-module="headers">
+                <input type="checkbox" value="headers" checked />
+                <span class="module-card">
+                  <span class="module-name">Headers</span>
+                  <span class="module-desc">Security headers</span>
+                </span>
+              </label>
+              <label class="module-toggle" data-module="sqli">
+                <input type="checkbox" value="sqli" checked />
+                <span class="module-card">
+                  <span class="module-name">SQLi</span>
+                  <span class="module-desc">SQL injection</span>
+                </span>
+              </label>
+              <label class="module-toggle" data-module="xss">
+                <input type="checkbox" value="xss" checked />
+                <span class="module-card">
+                  <span class="module-name">XSS</span>
+                  <span class="module-desc">Cross-site scripting</span>
+                </span>
+              </label>
+              <label class="module-toggle" data-module="redirect">
+                <input type="checkbox" value="redirect" checked />
+                <span class="module-card">
+                  <span class="module-name">Redirect</span>
+                  <span class="module-desc">Open redirects</span>
+                </span>
+              </label>
+              <label class="module-toggle" data-module="traversal">
+                <input type="checkbox" value="traversal" checked />
+                <span class="module-card">
+                  <span class="module-name">Traversal</span>
+                  <span class="module-desc">Path traversal</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">OPTIONS</label>
+            <div class="options-list">
+              <label class="option-row">
+                <input type="checkbox" id="crawlToggle" />
+                <span class="toggle-switch"></span>
+                <span class="option-label">Crawl entire site</span>
+              </label>
+              <label class="option-row" id="externalRow" style="opacity:0.3; pointer-events:none;">
+                <input type="checkbox" id="externalToggle" />
+                <span class="toggle-switch"></span>
+                <span class="option-label">Follow external links</span>
+              </label>
+              <label class="option-row" id="verboseRow">
+                <input type="checkbox" id="verboseToggle" />
+                <span class="toggle-switch"></span>
+                <span class="option-label">Verbose output</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field-group" id="maxPagesGroup" style="display:none;">
+            <label class="field-label">MAX PAGES <span id="maxPagesVal">20</span></label>
+            <input type="range" id="maxPages" min="5" max="100" value="20" class="range-input" />
+          </div>
+
+          <button class="scan-btn" id="scanBtn">
+            <span class="btn-text">LAUNCH SCAN</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+
+        <!-- Terminal output -->
+        <div class="terminal-panel">
+          <div class="terminal-header">
+            <span class="terminal-title">// SCAN OUTPUT</span>
+            <button class="clear-btn" id="clearBtn">CLEAR</button>
+          </div>
+          <div class="terminal-body" id="terminalOutput">
+            <div class="terminal-welcome">
+              <pre class="ascii-art">
+ ██╗    ██╗███████╗██████╗ ███████╗ ██████╗ █████╗ ███╗   ██╗
+ ██║    ██║██╔════╝██╔══██╗██╔════╝██╔════╝██╔══██╗████╗  ██║
+ ██║ █╗ ██║█████╗  ██████╔╝███████╗██║     ███████║██╔██╗ ██║
+ ██║███╗██║██╔══╝  ██╔══██╗╚════██║██║     ██╔══██║██║╚██╗██║
+ ╚███╔███╔╝███████╗██████╔╝███████║╚██████╗██║  ██║██║ ╚████║
+  ╚══╝╚══╝ ╚══════╝╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝</pre>
+              <p class="welcome-text">Ready. Configure your target and launch a scan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS TAB -->
+    <section class="tab" id="tab-reports">
+      <div class="tab-header">
+        <h1>Scan Reports</h1>
+        <p class="subtitle">Review findings from your last scan</p>
+        <button class="refresh-btn" id="refreshReports">↻ REFRESH</button>
+      </div>
+
+      <div id="reportsContent">
+        <div class="empty-state">No reports yet. Run a scan first.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

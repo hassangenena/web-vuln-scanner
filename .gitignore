@@ -3,4 +3,4 @@ __pycache__/
 *.pyc
 .env
 *.log
-app/*node_modules
+app/node_modules/

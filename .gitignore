@@ -1,6 +1,6 @@
-scan_report.json
+echo "node_modules/
 __pycache__/
 *.pyc
 .env
-*.log
-app/node_modules/
+scan_report.json
+*.log" > .gitignore

@@ -1,28 +1,43 @@
 """
 Flask backend — bridges the Electron UI to the Python scanner.
-Runs locally on http://localhost:5000
+Runs locally on http://127.0.0.1:5000
 """
 
-from flask import Flask, jsonify, request, Response, stream_with_context
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import subprocess
 import threading
 import json
 import os
 import sys
-import queue
+import shutil
+
+def get_python():
+    """Find the correct python executable."""
+    # Try the same python running this server first
+    candidates = [sys.executable, "python", "python3"]
+    for candidate in candidates:
+        path = shutil.which(candidate)
+        if path:
+            return path
+    return "python"
 
 app = Flask(__name__)
 CORS(app)
 
-# Store active scan output
-scan_queue = queue.Queue()
-scan_running = False
+# Global scan state
+scan_state = {
+    "running": False,
+    "lines": [],
+    "done": False,
+    "error": None,
+}
 
 
 @app.route("/api/scan", methods=["POST"])
 def start_scan():
-    global scan_running
+    if scan_state["running"]:
+        return jsonify({"error": "A scan is already running"}), 409
 
     data = request.json
     target = data.get("target", "").strip()
@@ -35,11 +50,7 @@ def start_scan():
     if not target:
         return jsonify({"error": "No target provided"}), 400
 
-    if scan_running:
-        return jsonify({"error": "A scan is already running"}), 409
-
-    # Build command
-    cmd = [sys.executable, "scanner.py", target, "--modules"] + modules
+    cmd = [get_python(), "scanner.py", target, "--modules"] + modules
     if crawl:
         cmd += ["--crawl", "--max-pages", str(max_pages)]
     if follow_external:
@@ -47,57 +58,52 @@ def start_scan():
     if verbose:
         cmd.append("--verbose")
 
-    def run_scan():
-        global scan_running
-        scan_running = True
-        # Clear queue
-        while not scan_queue.empty():
-            scan_queue.get()
+    # Reset state
+    scan_state["running"] = True
+    scan_state["lines"] = []
+    scan_state["done"] = False
+    scan_state["error"] = None
 
+    def run_scan():
         try:
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1,
                 cwd=os.path.dirname(os.path.abspath(__file__))
             )
             for line in process.stdout:
-                scan_queue.put({"type": "output", "line": line.rstrip()})
+                scan_state["lines"].append(line.rstrip())
+            stderr_output = process.stderr.read()
+            if stderr_output:
+                for line in stderr_output.splitlines():
+                    scan_state["lines"].append(f"[ERR] {line}")
             process.wait()
-            scan_queue.put({"type": "done", "returncode": process.returncode})
+            scan_state["done"] = True
         except Exception as e:
-            scan_queue.put({"type": "error", "message": str(e)})
+            scan_state["error"] = str(e)
+            scan_state["done"] = True
         finally:
-            scan_running = False
+            scan_state["running"] = False
 
-    thread = threading.Thread(target=run_scan, daemon=True)
-    thread.start()
-
+    threading.Thread(target=run_scan, daemon=True).start()
     return jsonify({"status": "started"})
 
 
-@app.route("/api/scan/stream")
-def stream_scan():
-    def generate():
-        while True:
-            try:
-                item = scan_queue.get(timeout=30)
-                yield f"data: {json.dumps(item)}\n\n"
-                if item.get("type") in ("done", "error"):
-                    break
-            except queue.Empty:
-                yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
-
-    return Response(
-        stream_with_context(generate()),
-        mimetype="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        }
-    )
+@app.route("/api/scan/poll")
+def poll_scan():
+    """Frontend polls this every second to get new output lines."""
+    offset = int(request.args.get("offset", 0))
+    new_lines = scan_state["lines"][offset:]
+    return jsonify({
+        "lines": new_lines,
+        "offset": offset + len(new_lines),
+        "done": scan_state["done"],
+        "running": scan_state["running"],
+        "error": scan_state["error"],
+    })
 
 
 @app.route("/api/reports")
@@ -111,7 +117,7 @@ def get_reports():
 
 @app.route("/api/status")
 def status():
-    return jsonify({"running": scan_running})
+    return jsonify({"running": scan_state["running"]})
 
 
 if __name__ == "__main__":

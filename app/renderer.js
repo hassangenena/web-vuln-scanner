@@ -1,4 +1,4 @@
-const API = "http://localhost:5000/api";
+const API = "http://127.0.0.1:5000/api";
 
 // Tab switching
 document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -109,30 +109,37 @@ async function startScan() {
       return;
     }
 
-    // Stream output
-    const evtSource = new EventSource(`${API}/scan/stream`);
-    evtSource.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === "output") {
-        appendLine(data.line, classifyLine(data.line));
-      } else if (data.type === "done") {
-        appendLine("", "");
-        appendLine("✔ Scan complete.", "success");
-        evtSource.close();
-        scanBtn.disabled = false;
-        setStatus("done");
-      } else if (data.type === "error") {
-        appendLine(`✖ ${data.message}`, "danger");
-        evtSource.close();
+    // Poll for output
+    let offset = 0;
+    const pollInterval = setInterval(async () => {
+      try {
+        const pollRes = await fetch(`${API}/scan/poll?offset=${offset}`);
+        const pollData = await pollRes.json();
+
+        pollData.lines.forEach((line) => {
+          appendLine(line, classifyLine(line));
+        });
+        offset = pollData.offset;
+
+        if (pollData.done) {
+          clearInterval(pollInterval);
+          if (pollData.error) {
+            appendLine(`✖ ${pollData.error}`, "danger");
+            setStatus("error");
+          } else {
+            appendLine("", "");
+            appendLine("✔ Scan complete.", "success");
+            setStatus("done");
+          }
+          scanBtn.disabled = false;
+        }
+      } catch (err) {
+        clearInterval(pollInterval);
+        appendLine(`✖ Lost connection to backend.`, "danger");
         scanBtn.disabled = false;
         setStatus("error");
       }
-    };
-    evtSource.onerror = () => {
-      evtSource.close();
-      scanBtn.disabled = false;
-      setStatus("idle");
-    };
+    }, 1000);
   } catch (err) {
     appendLine(`✖ Cannot connect to scanner backend. Is Flask running?`, "danger");
     appendLine(`  Error: ${err.message}`, "info");

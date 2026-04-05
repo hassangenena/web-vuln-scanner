@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, session } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
 
@@ -40,12 +40,26 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, "preload.js"),
     },
-    icon: path.join(__dirname, "icon.png"),
+  });
+
+  // Allow all requests to localhost
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({ requestHeaders: { ...details.requestHeaders } });
+  });
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self' 'unsafe-inline' http://127.0.0.1:5000 https://fonts.googleapis.com https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:5000"
+        ]
+      }
+    });
   });
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
-  // Open external links in browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };
